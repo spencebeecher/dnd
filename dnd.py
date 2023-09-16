@@ -23,7 +23,8 @@ class Abilities:
         wisdom = self.wisdom ,
         charisma = self.charisma)
 
-fundamental_math = pd.read_csv(StringIO("""Level_CR,Abl,Prof,Total,AC,Hit_Pcnt
+# https://rpgbot.net/dnd5/characters/fundamental_math/
+_fundamental_math = pd.read_csv(StringIO("""Level_CR,Abl,Prof,Total,AC,Hit_Pcnt
 1,3,2,5,13,65
 2,3,2,5,13,65
 3,3,2,5,13,65
@@ -45,7 +46,12 @@ fundamental_math = pd.read_csv(StringIO("""Level_CR,Abl,Prof,Total,AC,Hit_Pcnt
 19,5,6,11,19,65
 20,5,6,11,19,65"""))
 
-damage_targets = pd.read_csv(StringIO("""Level_CR,Max Expected_HP,Low_DPR,Target_DPR,High_DPR,Dude_Stop,Warlock,TWF_Rogue
+def fundamental_math():
+    '''Fundamental assumptions on levels from https://rpgbot.net/dnd5/characters/fundamental_math/'''
+    return _fundamental_math.copy()
+
+# https://rpgbot.net/dnd5/characters/fundamental_math/
+_damage_targets = pd.read_csv(StringIO("""Level_CR,Max Expected_HP,Low_DPR,Target_DPR,High_DPR,Dude_Stop,Warlock,TWF_Rogue
 1,85,3.5,7.1,14.2,28.3,6.3,10.47
 2,100,4.2,8.3,16.7,33.3,8.25,10.47
 3,115,4.8,9.6,19.2,38.3,8.25,14.1
@@ -67,6 +73,10 @@ damage_targets = pd.read_csv(StringIO("""Level_CR,Max Expected_HP,Low_DPR,Target
 19,355,14.8,29.6,59.2,118.3,38.2,44.38
 20,400,16.7,33.3,66.7,133.3,38.2,44.38
 """))
+def damage_targets():
+    '''Target damage for several scenarios from https://rpgbot.net/dnd5/characters/fundamental_math/'''
+    return _damage_targets.copy()
+
 def get_AC(level_or_CR):
     return fundamental_math.query(f"Level_CR=={level_or_CR}").AC.values[0]
 
