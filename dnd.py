@@ -78,16 +78,16 @@ def damage_targets():
     return _damage_targets.copy()
 
 def get_AC(level_or_CR):
-    return fundamental_math.query(f"Level_CR=={level_or_CR}").AC.values[0]
+    return fundamental_math().query(f"Level_CR=={level_or_CR}").AC.values[0]
 
 def proficency_bonus(level_or_CR):
-    return fundamental_math.query(f"Level_CR=={level_or_CR}").Prof.values[0]
+    return fundamental_math().query(f"Level_CR=={level_or_CR}").Prof.values[0]
 
 def attack_bonus(level_or_CR):
-    return fundamental_math.query(f"Level_CR=={level_or_CR}").Total.values[0]
+    return fundamental_math().query(f"Level_CR=={level_or_CR}").Total.values[0]
 
 
-class DiceRoll:
+class Dice:
     def __init__(self, num_dice, sides):
         
         self.num_dice=num_dice
@@ -106,18 +106,18 @@ class DiceRoll:
         return f'{self.num_dice}d{self.sides}'
     
     def __add__(self, b):
-        if type(b) == DiceRoll:
-            return RollSet([self, b])
-        elif type(b) == RollSet:
-            return RollSet(b.die_array + [self])
+        if type(b) == Dice:
+            return DiceSet([self, b])
+        elif type(b) == DiceSet:
+            return DiceSet(b.die_array + [self])
         else:
             return None
     
     def __sub__(self, b):
-        if type(b) == DiceRoll:
-            return RollSet([self], [b])
-        elif type(b) == RollSet:
-            return RollSet([self], b.die_array)
+        if type(b) == Dice:
+            return DiceSet([self], [b])
+        elif type(b) == DiceSet:
+            return DiceSet([self], b.die_array)
         else:
             return None
 
@@ -132,7 +132,7 @@ def _colapse_dice(die_array):
     
     die_array = []
     for sides, num_dice in dice.items():
-            die_array.append(DiceRoll(num_dice, sides))
+            die_array.append(Dice(num_dice, sides))
     return die_array
 
 def _expectation(die_array):
@@ -147,7 +147,7 @@ def _roll(die_array, num_simulations=1):
         result.append(d.roll(num_simulations))
     return np.array(result).sum(axis=0)
 
-class RollSet:
+class DiceSet:
 
     def __init__(self, die_array, negative_die_array=None):
         self.die_array = _colapse_dice(die_array)
@@ -168,18 +168,18 @@ class RollSet:
     
 
     def __add__(self, b):
-        if type(b) == DiceRoll:
-            return RollSet([b] + self.die_array, self.negative_die_array)
-        elif type(b) == RollSet:
-            return RollSet(b.die_array + self.die_array,  b.negative_die_array + self.negative_die_array)
+        if type(b) == Dice:
+            return DiceSet([b] + self.die_array, self.negative_die_array)
+        elif type(b) == DiceSet:
+            return DiceSet(b.die_array + self.die_array,  b.negative_die_array + self.negative_die_array)
         else:
             return None
         
     def __sub__(self, b):
-        if type(b) == DiceRoll:
-            return RollSet(self.die_array, [b] + self.negative_die_array)
-        elif type(b) == RollSet:
-            return RollSet(b.negative_die_array + self.die_array, b.die_array + self.negative_die_array)
+        if type(b) == Dice:
+            return DiceSet(self.die_array, [b] + self.negative_die_array)
+        elif type(b) == DiceSet:
+            return DiceSet(b.negative_die_array + self.die_array, b.die_array + self.negative_die_array)
         else:
             return None
         
@@ -200,15 +200,15 @@ class RollSet:
 
 def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
     
-    rolls = DiceRoll(1,20).roll(num_simulations)
+    rolls = Dice(1,20).roll(num_simulations)
     
     if not disadvantage:
         for _ in range(advantage):
-            extra_rolls = DiceRoll(1,20).roll(num_simulations)
+            extra_rolls = Dice(1,20).roll(num_simulations)
             rolls = np.max([rolls, extra_rolls], axis=0)
 
     elif not advantage:
-        extra_rolls = DiceRoll(1,20).roll(num_simulations)
+        extra_rolls = Dice(1,20).roll(num_simulations)
         rolls = np.min([rolls, extra_rolls], axis=0)
     
     return rolls
@@ -229,7 +229,7 @@ def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
 
 
 def spell_save(save_modifier, save_dc, damage_dice = None, num_simulations=10000):
-    rolls = DiceRoll(1,20).roll(num_simulations)
+    rolls = Dice(1,20).roll(num_simulations)
     
     if damage_dice:
         return (rolls + save_modifier >= save_dc) * damage_dice.roll(num_simulations)
