@@ -192,12 +192,6 @@ class DiceSet:
     def __repr__(self) -> str:
         return self.__str__()
 
-# # Dice Roll
-# def dr(num_dice, num_sides, num_simulations=2000):
-    
-#     rolls = np.random.choice(num_sides, [num_simulations, num_dice]) + 1 
-#     return rolls.sum(axis=1).mean()
-
 def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
     
     rolls = Dice(1,20).roll(num_simulations)
@@ -213,19 +207,6 @@ def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
     
     return rolls
 
-
-    return (rolls + roll_modifier > difficulty_class) | (rolls==20), rolls
-
-
-# Expected Damage on creature CR rating
-# CR 0-3 : +5 to hit vs 13 AC requires an 8 or better; 65% to hit.
-# CR 4 : (ASI) +6 to hit vs 14 AC requires an 8 or better; 65% to hit.
-# CR 5-7 : (Proficiency +3) +7 to hit vs 15 AC requires an 8 or better; 65% to hit.
-# CR 8 : (ASI to 20) +8 to hit vs 16 AC requires an 8 or better; 65% to hit.
-# CR 9 : (Proficiency +4) +9 to hit vs 16 AC requires a 7 or better; 70% to hit.
-# CR 10-12 : +9 to hit vs 17 AC requires an 8 or better; 65% to hit.
-# CR 13-16 : (Proficiency +5) +10 to hit vs 18 AC requires an 8 or better; 65% to hit.
-# CR 17+ : (Proficiency +6) +11 to hit vs 19 AC requires an 8 or better; 65% to hit.
 
 
 def spell_save(save_modifier, save_dc, damage_dice = None, num_simulations=10000):
@@ -266,32 +247,6 @@ def roll_damage(defender_AC, attack_modifier, damage_dice, bonus_damage=0,
 
     return (damage_roll + bonus_damage) * hits
 
-    #probability_hit = 1.0 - max(defender_AC -1 - attack_modifier, 0) / 20.0 
-
-    if advantage and not disadvantage:
-        #probability_hit = 1.0 - (1 - probability_hit) ** 2
-        crit_chance = 1.0 - (1 - crit_chance) ** 2
-        damage_roll += advantage_added_damage
-    elif disadvantage and not advantage:
-        #probability_hit = probability_hit ** 2
-        crit_chance = crit_chance ** 2
-    
-    probability_hit_no_crit = max(0.0, probability_hit - crit_chance)
-    
-    crit_damage = (damage_roll + crit_added_damage) * crit_multiplier + bonus_damage
-    non_crit_damage = damage_roll + bonus_damage
-    expected_damage_per_hit = probability_hit_no_crit * non_crit_damage + crit_chance * crit_damage 
-
-    results = {}
-    results['probablity_hit'] = probability_hit
-    results['defender_AC'] = defender_AC
-    results['crit_chance per round'] = crit_chance * num_attacks
-    results['hit_damage'] = non_crit_damage
-    results['crit_damage'] = crit_damage
-    results['damage_per_hit'] = expected_damage_per_hit
-    results['damage_per_round'] = expected_damage_per_hit * num_attacks
-    
-    return SimpleNamespace(**results)
 
 
 
