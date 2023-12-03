@@ -209,13 +209,19 @@ def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
 
 
 
-def spell_save(save_modifier, save_dc, damage_dice = None, num_simulations=10000):
-    rolls = Dice(1,20).roll(num_simulations)
+def spell_save_attack(save_modifier, save_dc, damage_dice = None, save_damage_dice = None, save_advantage=False, 
+               save_disadvantage=False, num_simulations=10000):
+    
+    rolls = advantage_roll(advantage=save_advantage, disadvantage=save_disadvantage, num_simulations=num_simulations)
     
     if damage_dice:
-        return (rolls + save_modifier >= save_dc) * damage_dice.roll(num_simulations)
+        if save_damage_dice:
+            return (~ ((rolls + save_modifier >= save_dc) | (rolls==20))) * damage_dice.roll(num_simulations) + \
+                (rolls + save_modifier < save_dc) * save_damage_dice.roll(num_simulations)
+        else:
+            return (~ (rolls + save_modifier >= save_dc)) * damage_dice.roll(num_simulations) 
     else:
-        return (rolls + save_modifier >= save_dc) 
+        return (~ (rolls + save_modifier >= save_dc)  | (rolls==20)) 
 
 
 
