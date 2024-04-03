@@ -113,6 +113,9 @@ class Dice:
         else:
             return None
     
+    def __radd__(self, b):
+        return self.__add__(b)
+    
     def __sub__(self, b):
         if type(b) == Dice:
             return DiceSet([self], [b])
