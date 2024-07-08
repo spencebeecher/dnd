@@ -106,17 +106,41 @@ class Dice:
         return f'{self.num_dice}d{self.sides}'
     
     def __add__(self, b):
+        if type(b) == int:
+            if b < 0:
+                return self.__sub__(-b)
+            b = Dice(b, 1)
+        
         if type(b) == Dice:
             return DiceSet([self, b])
         elif type(b) == DiceSet:
             return DiceSet(b.die_array + [self])
+        
+        
         else:
             return None
     
     def __radd__(self, b):
         return self.__add__(b)
     
+    def __mul__(self, b):
+        if type(b) == int:
+            return Dice(self.num_dice * b, self.sides)
+        else:
+            return None
+        
+    def __rmul__(self, b):
+        if type(b) == int:
+            return Dice(self.num_dice * b, self.sides)
+        else:
+            return None
+    
     def __sub__(self, b):
+        if type(b) == int:
+            if b < 0:
+                return self.__sub__(-b)
+            b = Dice(b, 1)
+
         if type(b) == Dice:
             return DiceSet([self], [b])
         elif type(b) == DiceSet:
@@ -127,7 +151,7 @@ class Dice:
 
 def _colapse_dice(die_array):
     if not die_array:
-        return None
+        return []
     dice = collections.Counter()
 
     for d in die_array:
@@ -171,6 +195,12 @@ class DiceSet:
     
 
     def __add__(self, b):
+        print('ok')
+        if type(b) == int:
+            if b < 0:
+                return self.__sub__(-b)
+            b = Dice(b, 1)
+
         if type(b) == Dice:
             return DiceSet([b] + self.die_array, self.negative_die_array)
         elif type(b) == DiceSet:
@@ -179,12 +209,25 @@ class DiceSet:
             return None
         
     def __sub__(self, b):
+        if type(b) == int:
+            b = Dice(b, 1)
+
         if type(b) == Dice:
             return DiceSet(self.die_array, [b] + self.negative_die_array)
         elif type(b) == DiceSet:
             return DiceSet(b.negative_die_array + self.die_array, b.die_array + self.negative_die_array)
         else:
             return None
+        
+    def __mul__(self, b):
+        if type(b) == int:
+            return DiceSet(_colapse_dice(self.die_array * b), _colapse_dice(self.negative_die_array * b))
+        else:
+            return None
+        
+    def __rmul__(self, b):
+        return self.__mul__(b)
+    
         
     def __str__(self) -> str:
         if self.negative_die_array:
@@ -212,7 +255,7 @@ def advantage_roll(advantage=False, disadvantage=False, num_simulations=1):
 
 
 
-def spell_save_attack(save_modifier, save_dc, damage_dice = None, save_damage_dice = None, save_advantage=False, 
+def save_roll(save_modifier, save_dc, damage_dice = None, save_damage_dice = None, save_advantage=False, 
                save_disadvantage=False, num_simulations=10000):
     
     rolls = advantage_roll(advantage=save_advantage, disadvantage=save_disadvantage, num_simulations=num_simulations)
