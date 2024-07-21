@@ -90,8 +90,8 @@ def attack_bonus(level_or_CR):
 class Dice:
     def __init__(self, num_dice, sides):
         
-        self.num_dice=num_dice
-        self.sides = sides
+        self.num_dice=int(num_dice)
+        self.sides = int(sides)
 
     def expectation(self):
         return (self.sides + 1.0) / 2.0 * self.num_dice 
@@ -300,7 +300,36 @@ def roll_damage(defender_AC, attack_modifier, damage_dice, bonus_damage=0,
     return (damage_roll + bonus_damage) * hits
 
 
+# read challenge_rating.txt
 
+def challenge_rating(num_players, player_level):
+    ret = []
+    with open('challenge_rating.txt') as f:
+        lines = f.readlines()
+        crs = None
+        
+        for line in lines:
+            if line == '':
+                ret.append({})
+            elif line.startswith('cr:'):
+                crs = line.split(':')[1].strip().split('\t')
+            else:
+                cells = line.split('\t')
+                level = cells[0][:-2]
+                for cr, ratio in zip(crs, cells[1:]):
+                    ratio = ratio.strip()
+                    if ratio == '—':
+                        continue
+                    ratio_s = ratio.split(':')
+                    ret.append({
+                        'level': level, 
+                        'cr': cr, 'ratio': ratio,
+                        'creatures': ratio_s[0], 
+                        'players': ratio_s[1], 
+                        'creatures_per_player': int(ratio_s[1])/ int(ratio_s[0])
+                    })
+    df = pd.DataFrame(ret)
+    return df[df['level'] == str(player_level)].set_index('cr')['creatures_per_player']*num_players
 
 def gambling_rolls(intimidation, deception, insight):
     bonus_array = np.array([intimidation, deception, insight])

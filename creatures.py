@@ -1,209 +1,179 @@
-import re
+from importlib import reload
+import matplotlib.pyplot as plt
+import dnd
+
+from dnd import Dice
+
 import pandas as pd
 import numpy as np
-
-immunities = ['poison', 'fire', 'cold', 'lightning', 'bludgeoning', 'piercing', 'slashing', 'acid', 'necrotic', 'radiant', 
-              'thunder', 'force', 'psychic',
-              'slashing', 'bludgeoning', 'piercing']
-
-conditions = {
-'prone' : 'prone',
-'blind' : 'blindness',
- 'blinded' : 'blindness',
- 'blindness': 'blindness',
-'charmed' : 'charmed',
- 'confusion': 'confusion',
-'deafeed' : 'deafened',
- 'deafened': 'deafened',
-'exhausted': 'exhaustion',
- 'exhaustion' : 'exhaustion',
-'fright': 'frighened',
- 'frightened' : 'frightened',
-'grappled' : 'grappled',
-'paralysis' : 'paralysis',
- 'paralyzed' : 'paralysis',
- 'petrification' : 'petrified',
- 'petrified' : 'petrified',
-'poisoned': 'poisoned',
-'restrained' : 'restrained',
-'stunned' : 'stunned',
-'unconscious' : 'unconscious'
-}
-
-removed = set()
-def map_immunities(value):
-    
-    if value == np.nan or type(value) != str:
-        return []
-    im=list([x for x in re.split('[,; "]+', value) if x != '' ])
-    
-    for a in im:
-        if a not in immunities:
-            removed.add(a)
-    
-    return list([x for x in im if x in immunities])
-
-def map_condition_immunities(value):
-    if value == np.nan or type(value) != str:
-        return []
-    im=list([x for x in re.split('[,; "]+', value) if x != '' ])
-    for a in im:
-        if a not in conditions:
-            removed.add(a)
-        
-
-    return list([conditions[x] for x in im if x in conditions])
-
-
-
-class Creature():
-    
-    def __init__(self, lines):
-        
-
-
-        comment_counter = 0
-        for line in lines:
-            if line.startswith('---'):
-                comment_counter += 1
-                if comment_counter == 2:
-                    break
-            else:
-                try:
-                    line = line.lower()
-
-                    
-                    parse_line = lambda x: x.split(': ')[1].strip()
-
-                    parse_string = lambda x: x.split(': ')[1].strip().removeprefix('"').removesuffix('"')
-
-                    parse_first_val = lambda x: int(x.split(': ')[1].split(' ')[0].strip())
-                    parse_attribute = parse_first_val
-
-                    parse_first_quote = lambda x: int(x.split(': ')[1].split(' ')[0].strip().removeprefix('"').removesuffix('"'))
-
-                    parse_tags = lambda x: list([y for y in x.split(': ')[1].strip().removeprefix('[').removesuffix(']').split(',')])
-
-                    
-                    if line.startswith('name:'):
-                        self.name = parse_string(line)
-                    elif line.startswith('tags:'):
-                        self.tags = parse_tags(line)
-                    elif line.startswith('cha:'):
-                        self.cha = parse_attribute(line)
-                    elif line.startswith('wis:'):
-                        self.wis = parse_attribute(line)
-                    elif line.startswith('int:'):
-                        self.int = parse_attribute(line)
-                    elif line.startswith('con:'):
-                        self.con = parse_attribute(line)
-                    elif line.startswith('dex:'):
-                        self.dex = parse_attribute(line)
-                    elif line.startswith('str:'):
-                        self.str = parse_attribute(line)
-                    elif line.startswith('size:'):
-                        self.size = line.split(': ')[1].strip()
-                    elif line.startswith('alignment:'):
-                        self.alignment = line.split(': ')[1].strip()
-                    elif line.startswith('challenge:'):
-                        self.challenge = parse_string(line)
-                    elif line.startswith('languages:'):
-                        self.languages = line.split(': ')[1].strip()
-                    elif line.startswith('skills:'):
-                        self.skills = line.split(': ')[1].strip()
-                    elif line.startswith('speed:'):
-                        self.speed = parse_line(line)
-                    elif line.startswith('hit_points:'):
-                        self.hit_points = parse_first_quote(line)
-                    elif line.startswith('armor_class:'):
-                        self.armor_class = parse_first_quote(line)
-                    elif line.startswith('page_number:'):
-                        self.page_number = parse_first_val(line)
-                    elif line.startswith('senses:'):
-                        self.senses = parse_line(line)
-                    elif line.startswith('damage_resistances:'):
-                        self.damage_resistances = map_immunities(parse_line(line))
-                    elif line.startswith('layout:'):
-                        pass
-                    elif line.startswith('saving_throws:'):
-                        self.saving_throws = parse_line(line)
-                    elif line.startswith('damage_immunities:'):
-                        self.damage_immunities = map_immunities(parse_line(line))
-                    elif line.startswith('condition_immunities:'):
-                        self.condition_immunities = map_condition_immunities(parse_line(line))
-                    elif line.startswith('damage_vulnerabilities:') or line.startswith('damage_vulnerabilites:'):
-                        self.damage_vulnerabilities = map_immunities(parse_line(line))
-
-                        
-                    else:
-                        print(f'{self.name} Unparsed line: {line}')
-                except:
-                    print('error', line)
-                    
-                    print(self)
-
-    def __str__(self):
-        return str(vars(self))
-    
-
-    #look through all md files in the creatures directory reading each in
-#and parsing the data into a pandas dataframe
+import json
 import os
-
-
 
 def read_creatures():
     creatures = []
-    for filename in os.listdir('creatures'):
-        if filename.endswith('.md'):
-            with open('creatures/' + filename, 'r') as f:
-                creature = Creature(f.readlines())
-                creatures.append(creature)
-                
+    path = 'data/bestiary/'
+    for filename in os.listdir(path):
+        if filename.endswith('.json'):
+            with open(path + filename, 'r') as f:
+                j = json.load(f)
+                if 'monster' in j:
+                    for monster_json in j['monster']:
+                        is_npc = 'isNpc' in monster_json and monster_json['isNpc']
+                        is_copy = '_copy' in monster_json 
+                        is_summoned = 'summonedBySpell' in monster_json or 'summonedByClass' in monster_json
+                        
+                        if not is_npc and not is_copy and not is_summoned:
+                            creature = Creature(monster_json)
+                            creatures.append(creature)
     return creatures
 
-creatures = read_creatures()
+def flatten_dict(d, parent_key='', sep='_'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            try:
+                v = float(v)
+            except:
+                pass
+            items.append((new_key, v))
+    return dict(items)
 
-#Create a pandas dataframe from the creatures
-creatures = pd.DataFrame([c.__dict__ for c in creatures])
+def dict_vals_to_float(d):
+    return dict( (k, float(v)) for k, v in d.items() )
+
+# turn a list of strings into a dictionary of boolean true values
+def list_to_dict(l, sep='_', parent_key=''):
+	return {f'{parent_key}{sep}{x}': True for x in l if type(x) == str}
 
 import re
-level_regex = re.compile('(\d+) .+')
-fractionlevel_regex = re.compile('(\d+)/(\d+) .+')
+level_regex = re.compile('(\d+)')
+fractionlevel_regex = re.compile('(\d+)/(\d+)')
 def parse_level(value):
+    if type(value) == int or type(value) == float:
+        return value
     level_match = level_regex.match(value)
+    fraction_match = fractionlevel_regex.match(value)
+    if fraction_match:
+        
+        numerator = float(fraction_match.group(1))
+        denominator = float(fraction_match.group(2))
+        return numerator / denominator
     if level_match:
         return float(level_match.group(1))
-    else:
-        fraction_match = fractionlevel_regex.match(value)
-        if fraction_match:
-            numerator = float(fraction_match.group(1))
-            denominator = float(fraction_match.group(2))
-            return numerator / denominator
+        
+    
     return np.nan
 
-creatures['challenge_level'] = creatures.challenge.astype(str).apply(parse_level)
+class Creature:
+    def __init__(self, creature_dict):
+        # initialize values from dictionary
+        self.creature_dict = creature_dict
 
-# get all the unique tags in a column of a dataframe that is a list
-def get_tags(df, column):
-    tags = set()
-    for tag_list in df[column].dropna():
-        tags.update(tag_list)
-    return tags
+    def as_record(self):
+        # return a flattened dictionary recursively
+        ret = flatten_dict(self.creature_dict)
+        if 'cr' in ret:
+            ret['cr'] = parse_level(ret['cr'])
+        if 'ac' in ret:
+            if type(ret['ac'][0]) == dict:
+                ret['ac_val'] = ret['ac'][0]['ac']
+            elif type(ret['ac'][0]) == int:
+                ret['ac_val'] = ret['ac'][0]
+        if 'immune' in ret:
+            ret.update(list_to_dict(ret['immune'], parent_key='immune'))
+        if 'resist' in ret:
+            resist_ret = list_to_dict(ret['resist'], parent_key='resist')
+            if 'resist' in ret:
+                for v in ret['resist']:
+                    if type(v) == dict and 'resist' in v:
+                        resist_ret.update(list_to_dict(v['resist'], parent_key='resist'))
+            ret.update(resist_ret)
+        if 'conditionImmune' in ret:
+            ret.update(list_to_dict(ret['conditionImmune'], parent_key='conditionImmune'))
+        return ret
+    
 
-#turn a list of values into a dataframe of boolean values
-# and the values are in the column
-def list_to_df(df, column, in_place=False):
-    if not in_place:
-        df = df.copy()
-    values = get_tags(df, column)
-    for value in values:
-        df[f'{column}_{value}'] = df[column].apply(lambda x: value in x if type(x) == list else False)
+attributes = ['cha', 'con', 'dex', 'int', 'str', 'wis']
+skll_to_attributes = {
+    'acrobatics': 'dex',
+    'animal handling': 'wis',
+    'arcana': 'int',
+    'athletics': 'str',
+    'deception': 'cha',
+    'history': 'int',
+    'insight': 'wis',
+    'intimidation': 'cha',
+    'investigation': 'int',
+    'medicine': 'wis',
+    'nature': 'int',
+    'perception': 'wis',
+    'performance': 'cha',
+    'persuasion': 'cha',
+    'religion': 'int',
+    'sleight of hand': 'dex',
+    'stealth': 'dex',
+    'survival': 'wis'
+}
+
+def fill_columnset_default(df, column_prefix, default):
+    for column in df.columns:
+        if column.startswith(column_prefix):
+            df[column] = df[column].fillna(default)
     return df
 
-creatures = list_to_df(creatures, 'damage_immunities')
-creatures = list_to_df(creatures, 'damage_resistances')
-creatures = list_to_df(creatures, 'damage_vulnerabilities')
-creatures = list_to_df(creatures, 'condition_immunities')
+def get_creatures_df():
+    creatures = read_creatures()
+    creatures_df = pd.DataFrame([c.as_record() for c in creatures])
+    creatures_df = creatures_df[creatures_df['cr'].isna() == False].reset_index(drop=True)
+    for attribute in attributes:
+        creatures_df['save_'+attribute] = np.where(
+            creatures_df['save_'+attribute] > np.round((creatures_df[attribute] - 10)/2), 
+            creatures_df['save_'+attribute], 
+            np.round((creatures_df[attribute] - 10)/2)
+        )
+
+    for skill in skll_to_attributes:
+        creatures_df['skill_'+skill] = np.where(
+            creatures_df['skill_'+skill] > np.round((creatures_df[skll_to_attributes[skill]] - 10)/2), 
+            creatures_df[skll_to_attributes[skill]], 
+            np.round((creatures_df[skll_to_attributes[skill]] - 10)/2)
+        )
+
+    for col in ['immune', 'conditionImmune', 'resist', 'vulnerable']:
+        fill_columnset_default(creatures_df, col+'_', False)
+    
+
+    return creatures_df
 
 
+
+import dnd
+def creature_damage_save(c, save_type, save_dc, damage_dice, damage_type):
+    modifier = 1
+    if c[f'resist_{damage_type}']:
+        modifier = 0.5
+    elif c[f'immune_{damage_type}']:
+        modifier = 0 
+    
+    return dnd.save_roll(c[f'save_{save_type}'], save_dc, damage_dice, 0.5*damage_dice).mean()*modifier
+
+def creature_condition_save(c, save_type, save_dc, condition):
+    modifier = 1
+    if f'conditionImmune_{condition}' in c and c[f'conditionImmune_{condition}']:
+        #print(c['name'], 'immune', c[f'conditionImmune_{condition}'])
+        modifier = 0
+    return dnd.save_roll(c[f'save_{save_type}'], save_dc).mean()*modifier
+
+def get_resistance_stats(df, resistance):
+    pivot_cols = ['cr', f'resist_{resistance}', f'immune_{resistance}']
+    p_df = pd.DataFrame(df.groupby(pivot_cols).name.count()).pivot_table(index=pivot_cols[0], columns=pivot_cols[1:], values='name', fill_value=0)
+    p_df.columns = ['No Resistance', resistance + ' Resistance', resistance + ' Immunity']
+    p_df.plot(kind='bar', stacked=True)
+    plt.title(resistance + ' Resistance and Immunity by Challenge Level')
+    p_df['percent_immune'] = p_df[resistance + ' Immunity'] / (p_df[resistance + ' Immunity'] + p_df[resistance + ' Resistance'] + p_df['No Resistance']) 
+    p_df['percent_resistant'] = p_df[resistance + ' Resistance'] / (p_df[resistance + ' Immunity'] + p_df[resistance + ' Resistance'] + p_df['No Resistance'])
+    p_df['percent_no_resistance'] = p_df['No Resistance'] / (p_df[resistance + ' Immunity'] + p_df[resistance + ' Resistance'] + p_df['No Resistance'])
+    return p_df
