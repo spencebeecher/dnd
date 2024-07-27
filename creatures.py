@@ -151,6 +151,20 @@ def get_creatures_df():
 
 
 import dnd
+
+def creature_damage_roll(c, damage_type,  attack_modifier, damage_dice, 
+                         bonus_damage: int = 0, crit_added_damage_dice = None, 
+                         crit_on = 20, advantage = False, disadvantage = False):
+    defender_AC = c['ac_val']
+    modifier = 1
+    if c[f'resist_{damage_type}']:
+        modifier = 0.5
+    elif c[f'immune_{damage_type}']:
+        modifier = 0 
+    
+    return dnd.roll_damage(defender_AC, attack_modifier, damage_dice, bonus_damage, 
+                           crit_added_damage_dice, crit_on, advantage, disadvantage).mean()*modifier
+
 def creature_damage_save(c, save_type, save_dc, damage_dice, damage_type):
     modifier = 1
     if c[f'resist_{damage_type}']:

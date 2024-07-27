@@ -195,7 +195,6 @@ class DiceSet:
     
 
     def __add__(self, b):
-        print('ok')
         if type(b) == int:
             if b < 0:
                 return self.__sub__(-b)
